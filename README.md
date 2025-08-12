@@ -2,6 +2,8 @@
 
 Este projeto implementa um sistema de pedidos seguindo os princípios da Clean Architecture em Go, com múltiplas interfaces de comunicação (REST API, gRPC, GraphQL) e integração com RabbitMQ para eventos.
 
+**🚀 Setup completamente automatizado com Docker!** O comando `docker compose up` inicia todo o ambiente automaticamente, incluindo a aplicação Go.
+
 ## 🏗️ Arquitetura
 
 O projeto segue os princípios da Clean Architecture com as seguintes camadas:
@@ -13,8 +15,8 @@ O projeto segue os princípios da Clean Architecture com as seguintes camadas:
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Go 1.19**
-- **MySQL 5.7** - Banco de dados
+- **Go 1.24.5**
+- **MySQL 8.0** - Banco de dados
 - **RabbitMQ 3.13.7** - Message broker para eventos
 - **GraphQL** - Interface de consulta
 - **gRPC** - Comunicação RPC
@@ -22,6 +24,7 @@ O projeto segue os princípios da Clean Architecture com as seguintes camadas:
 - **Wire** - Injeção de dependência
 - **Chi** - Router HTTP
 - **GQLGen** - Geração de código GraphQL
+- **Docker** - Containerização e orquestração
 
 ## 📁 Estrutura do Projeto
 
@@ -45,107 +48,74 @@ O projeto segue os princípios da Clean Architecture com as seguintes camadas:
 │   └── usecase/            # Casos de uso
 ├── pkg/                    # Pacotes compartilhados
 │   └── events/             # Sistema de eventos
-├── docker-compose.yaml     # Serviços de infraestrutura
+├── migrations/             # Migrações SQL automáticas
+├── Dockerfile              # Imagem da aplicação Go
+├── docker-compose.yaml     # Orquestração dos serviços
+├── entrypoint.sh           # Script de inicialização da aplicação
 ├── go.mod                  # Dependências Go
 └── gqlgen.yml              # Configuração GraphQL
 ```
 
 ## 🛠️ Pré-requisitos
 
-- Go 1.19 ou superior
 - Docker e Docker Compose
-- Make (opcional, para comandos de automação)
+- Go 1.24.5 (apenas para desenvolvimento local)
 
 ## 🚀 Como Executar
 
-### 1. Iniciar Serviços de Infraestrutura
+### 🐳 Setup Automatizado com Docker
 
 ```bash
-# Iniciar MySQL e RabbitMQ
-docker-compose up -d
+docker compose up --build
 ```
 
-### 2. Aguardar a inicialização do banco de dados
+**O que acontece automaticamente:**
+1. **MySQL**: Inicia com healthcheck e executa migrações automaticamente
+2. **RabbitMQ**: Inicia com healthcheck para verificação de disponibilidade
+3. **Aplicação Go**: Só inicia após MySQL e RabbitMQ estarem prontos
+4. **Migrações**: Executadas automaticamente pelo MySQL
+5. **Todos os endpoints**: REST, gRPC e GraphQL ficam disponíveis
 
-O MySQL precisa de alguns segundos para inicializar completamente. Aguarde até que o container esteja pronto.
+### 🔧 Desenvolvimento Local
 
-### 3. Configurar Variáveis de Ambiente
+```bash
+# 1. Iniciar serviços de infraestrutura
+docker-compose up -d mysql rabbitmq
 
-Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
-
-```env
-# Database
+# 2. Configurar variáveis de ambiente (.env)
 DB_DRIVER=mysql
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=root
 DB_NAME=orders
-
-# Servers
-WEB_SERVER_PORT=8000
+WEB_SERVER_PORT=8080
 GRPC_SERVER_PORT=50051
-GRAPHQL_SERVER_PORT=8080
-
-# RabbitMQ
+GRAPHQL_SERVER_PORT=8081
 RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
 RABBITMQ_USER=guest
 RABBITMQ_PASSWORD=guest
-```
 
-**Importante**: Certifique-se de que o arquivo `.env` está na raiz do projeto (mesmo nível do `go.mod`).
-
-### 4. Instalar Dependências
-
-```bash
-go mod download
-```
-
-### 5. Gerar Código GraphQL (se necessário)
-
-```bash
-go run github.com/99designs/gqlgen generate
-```
-
-### 6. Gerar Código gRPC (se necessário)
-
-Se você estiver usando ASDF, pode ser necessário usar o caminho completo das ferramentas:
-
-```bash
-# Gerar código protobuf
-protoc --go_out=. --go_opt=paths=source_relative \
-       --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-       internal/infra/grpc/protofiles/order.proto
-
-# Ou usar o caminho completo se as ferramentas não estiverem no PATH:
-# ~/.asdf/installs/golang/1.24.5/bin/protoc --go_out=. --go_opt=paths=source_relative \
-#        --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-#        internal/infra/grpc/protofiles/order.proto
-```
-
-### 7. Executar a Aplicação
-
-```bash
+# 3. Executar a aplicação
 go run cmd/ordersystem/main.go wire_gen.go
 ```
 
 ## 🌐 Interfaces Disponíveis
 
 ### Portas dos Serviços
-
-- **REST API**: Porta 8000
-- **GraphQL**: Porta 8080
+- **REST API**: Porta 8080
+- **GraphQL**: Porta 8081
 - **gRPC**: Porta 50051
 - **MySQL**: Porta 3306
 - **RabbitMQ**: Porta 5672
 - **RabbitMQ Management**: Porta 15672
 
-### REST API (Porta 8000)
+### REST API (Porta 8080)
 
 **Criar Pedido:**
 ```bash
-curl -X POST http://localhost:8000/order \
+curl -X POST http://localhost:8080/order \
   -H "Content-Type: application/json" \
   -d '{
     "id": "order-123",
@@ -156,12 +126,12 @@ curl -X POST http://localhost:8000/order \
 
 **Listar Pedidos:**
 ```bash
-curl -X GET http://localhost:8000/order
+curl -X GET http://localhost:8080/order
 ```
 
-### GraphQL (Porta 8080)
+### GraphQL (Porta 8081)
 
-Acesse o playground: http://localhost:8080
+Acesse o playground: http://localhost:8081
 
 **Mutation para criar pedido:**
 ```graphql
@@ -197,173 +167,113 @@ Use um cliente gRPC para conectar e chamar os métodos:
 - `CreateOrder` - Para criar pedidos
 - `ListOrders` - Para listar pedidos
 
-## 📊 Monitoramento
+## 🐳 Arquivos Docker
 
-- **RabbitMQ Management**: http://localhost:15672
-  - Usuário: `guest`
-  - Senha: `guest`
+### Dockerfile
+- **Multi-stage build** para otimização
+- **Imagem base**: Go 1.24.5-alpine para build, Alpine para runtime
+- **Segurança**: Executa como usuário não-root
+- **Binário**: Compila `./cmd/ordersystem` em `./app`
 
-## 🧪 Testes
+### docker-compose.yaml
+- **MySQL**: Com healthcheck e migrações automáticas
+- **RabbitMQ**: Com healthcheck
+- **Aplicação**: Depende dos serviços estarem saudáveis
+- **Volumes**: Mapeia `./migrations:/docker-entrypoint-initdb.d`
 
+### entrypoint.sh
+- Aguarda MySQL e RabbitMQ estarem prontos
+- Só executa a aplicação após dependências estarem disponíveis
+
+## 🧪 Testando a Aplicação
+
+### Verificar Status dos Serviços
 ```bash
-# Executar todos os testes
-go test ./...
-
-# Executar testes com coverage
-go test -cover ./...
+docker compose ps
 ```
 
-## 📝 Exemplo de Uso
-
-### Via REST API
-
+### Ver Logs da Aplicação
 ```bash
-# Criar um pedido
-curl -X POST http://localhost:8000/order \
+docker compose logs -f app
+```
+
+### Testar Endpoints
+```bash
+# REST API
+curl http://localhost:8080/order
+
+# GraphQL
+curl -X POST http://localhost:8081/query \
   -H "Content-Type: application/json" \
-  -d '{
-    "id": "order-001",
-    "price": 100.00,
-    "tax": 15.00
-  }'
+  -d '{"query":"query { orders { id price tax final_price } }"}'
 ```
 
-Resposta esperada:
-```json
-{
-  "id": "order-001",
-  "price": 100.00,
-  "tax": 15.00,
-  "final_price": 115.00
-}
-```
+### Acessar RabbitMQ Management
+- URL: http://localhost:15672
+- Usuário: `guest`
+- Senha: `guest`
+
+## 🛠️ Comandos Docker Úteis
 
 ```bash
-# Listar todos os pedidos
-curl -X GET http://localhost:8000/order
+# Iniciar serviços
+docker compose up -d
+
+# Parar serviços
+docker compose down
+
+# Reconstruir e iniciar
+docker compose up --build -d
+
+# Ver logs
+docker compose logs -f
+
+# Acessar shell da aplicação
+docker compose exec app sh
+
+# Acessar MySQL
+docker compose exec mysql mysql -u root -proot orders
 ```
 
-Resposta esperada:
-```json
-[
-  {
-    "id": "order-001",
-    "price": 100.00,
-    "tax": 15.00,
-    "final_price": 115.00
-  }
-]
-```
+## 🔍 Troubleshooting
 
-### Via GraphQL
+### Problemas Comuns
 
-1. Acesse http://localhost:8080
-2. Execute a mutation para criar:
+1. **Aplicação não inicia**: Verifique logs com `docker compose logs app`
+2. **Migrações não executaram**: Verifique logs do MySQL
+3. **Porta já em uso**: Pare containers e verifique portas
 
-```graphql
-mutation CreateOrder {
-  createOrder(input: {
-    id: "order-002"
-    Price: 200.00
-    Tax: 30.00
-  }) {
-    id
-    Price
-    Tax
-    FinalPrice
-  }
-}
-```
-
-3. Execute a query para listar:
-
-```graphql
-query ListOrders {
-  orders {
-    id
-    Price
-    Tax
-    FinalPrice
-  }
-}
-```
-
-## 🔧 Desenvolvimento
-
-### Gerar Código Wire (Injeção de Dependência)
+### Comandos de Diagnóstico
 
 ```bash
-go install github.com/google/wire/cmd/wire@latest
-wire ./cmd/ordersystem
-```
+# Verificar logs da aplicação
+docker compose logs app
 
-### Gerar Código GraphQL
+# Verificar se MySQL está rodando
+docker compose exec mysql mysqladmin ping -u root -proot
 
-```bash
-go run github.com/99designs/gqlgen generate
-```
-
-### Estrutura de Dados
-
-O sistema trabalha com a entidade `Order` que possui:
-- `ID`: Identificador único do pedido
-- `Price`: Preço do produto
-- `Tax`: Taxa aplicada
-- `FinalPrice`: Preço final (Price + Tax)
-
-## 🐳 Docker
-
-Para executar apenas os serviços de infraestrutura:
-
-```bash
-docker-compose up -d
-```
-
-Para parar os serviços:
-
-```bash
-docker-compose down
+# Verificar migrações
+docker compose exec mysql ls -la /docker-entrypoint-initdb.d/
 ```
 
 ## 📋 Funcionalidades
 
-- ✅ Criação de pedidos via REST API
-- ✅ Listagem de pedidos via REST API
-- ✅ Criação de pedidos via GraphQL
-- ✅ Listagem de pedidos via GraphQL
-- ✅ Criação de pedidos via gRPC
-- ✅ Listagem de pedidos via gRPC
+- ✅ Criação e listagem de pedidos via REST API, GraphQL e gRPC
 - ✅ Sistema de eventos com RabbitMQ
-- ✅ Validação de dados
-- ✅ Cálculo automático do preço final
-- ✅ Persistência em MySQL
-- ✅ Clean Architecture
-- ✅ Injeção de dependência com Wire
+- ✅ Validação de dados e cálculo automático do preço final
+- ✅ Persistência em MySQL com migrações automáticas
+- ✅ Clean Architecture com injeção de dependência (Wire)
+- ✅ **Setup completamente automatizado com Docker**
+- ✅ **Healthchecks para todos os serviços**
+- ✅ **Inicialização automática da aplicação Go**
 
-## 🔍 Logs e Monitoramento
+## 🎯 Como Funciona o Setup Docker
 
-O sistema emite eventos quando um pedido é criado. Você pode monitorar esses eventos no RabbitMQ Management Console.
-
-## 🚨 Troubleshooting
-
-### Problemas Comuns
-
-1. **Erro de conexão com MySQL**: Verifique se o container está rodando
-2. **Erro de conexão com RabbitMQ**: Verifique se o container está rodando
-3. **Porta já em uso**: Verifique se as portas 8000, 8080, 50051 estão livres
-
-### Comandos Úteis
-
-```bash
-# Verificar status dos containers
-docker-compose ps
-
-# Ver logs dos containers
-docker-compose logs
-
-# Reiniciar serviços
-docker-compose restart
-```
+1. **Inicialização**: `docker compose up` inicia todos os serviços
+2. **MySQL**: Executa automaticamente as migrações da pasta `./migrations`
+3. **Healthchecks**: Verificam se os serviços estão saudáveis
+4. **Aplicação**: Só inicia após MySQL e RabbitMQ estarem prontos
+5. **Conectividade**: Todos os serviços se comunicam via rede Docker interna
 
 ## 📄 Licença
 
