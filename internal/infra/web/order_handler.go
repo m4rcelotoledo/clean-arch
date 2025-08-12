@@ -50,11 +50,13 @@ func (h *WebOrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *WebOrderHandler) List(w http.ResponseWriter, r *http.Request) {
 	listOrders := usecase.NewListOrdersUseCase(h.OrderRepository)
+
 	output, err := listOrders.Execute()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	err = json.NewEncoder(w).Encode(output)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yaml
+.dockerignore
+
+# Dependências e builds
+vendor/
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Testes
+*.test
+*.out
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de configuração local
+# .env (mantido para configuração da aplicação)
+.env.local
+
+# Documentação
+README.md
+*.md
+
+# Migrações (não precisamos copiar para a imagem da aplicação)
+migrations/
+
+# Docker volumes
+.docker/

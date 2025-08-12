@@ -1,5 +1,5 @@
 ### Criar uma nova order
-POST http://localhost:8000/order
+POST http://localhost:8080/order
 Content-Type: application/json
 
 {
@@ -9,10 +9,10 @@ Content-Type: application/json
 }
 
 ### Listar todas as orders
-GET http://localhost:8000/order
+GET http://localhost:8080/order
 
 ### Criar outra order
-POST http://localhost:8000/order
+POST http://localhost:8080/order
 Content-Type: application/json
 
 {
@@ -22,4 +22,4 @@ Content-Type: application/json
 }
 
 ### Listar orders novamente
-GET http://localhost:8000/order
+GET http://localhost:8080/order

@@ -29,11 +29,20 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Printf("Connecting to database: %s:%s@tcp(%s:%s)/%s\n", configs.DBUser, configs.DBPassword, configs.DBHost, configs.DBPort, configs.DBName)
+
 	db, err := sql.Open(configs.DBDriver, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", configs.DBUser, configs.DBPassword, configs.DBHost, configs.DBPort, configs.DBName))
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
+
+	// Test database connection
+	if err := db.Ping(); err != nil {
+		fmt.Printf("Database connection failed: %v\n", err)
+		panic(err)
+	}
+	fmt.Println("Database connected successfully!")
 
 	rabbitMQChannel := getRabbitMQChannel()
 

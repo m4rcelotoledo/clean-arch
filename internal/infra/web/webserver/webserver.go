@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -33,5 +34,6 @@ func (s *WebServer) AddPostHandler(path string, handler http.HandlerFunc) {
 // register middeleware logger
 // start the server
 func (s *WebServer) Start() {
-	http.ListenAndServe(s.WebServerPort, s.Router)
+	fmt.Printf("Starting webserver on port %s\n", s.WebServerPort)
+	http.ListenAndServe(":"+s.WebServerPort, s.Router)
 }

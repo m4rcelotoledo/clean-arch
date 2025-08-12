@@ -1,36 +1,48 @@
 package configs
 
-import "github.com/spf13/viper"
+import (
+	"os"
+)
 
 type conf struct {
-	DBDriver          string `mapstructure:"DB_DRIVER"`
-	DBHost            string `mapstructure:"DB_HOST"`
-	DBPort            string `mapstructure:"DB_PORT"`
-	DBUser            string `mapstructure:"DB_USER"`
-	DBPassword        string `mapstructure:"DB_PASSWORD"`
-	DBName            string `mapstructure:"DB_NAME"`
-	WebServerPort     string `mapstructure:"WEB_SERVER_PORT"`
-	GRPCServerPort    string `mapstructure:"GRPC_SERVER_PORT"`
-	GraphQLServerPort string `mapstructure:"GRAPHQL_SERVER_PORT"`
-	RabbitMQHost      string `mapstructure:"RABBITMQ_HOST"`
-	RabbitMQPort      string `mapstructure:"RABBITMQ_PORT"`
-	RabbitMQUser      string `mapstructure:"RABBITMQ_USER"`
-	RabbitMQPassword  string `mapstructure:"RABBITMQ_PASSWORD"`
+	DBDriver          string
+	DBHost            string
+	DBPort            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	WebServerPort     string
+	GRPCServerPort    string
+	GraphQLServerPort string
+	RabbitMQHost      string
+	RabbitMQPort      string
+	RabbitMQUser      string
+	RabbitMQPassword  string
 }
 
 func LoadConfig(path string) (*conf, error) {
-	var cfg *conf
-	viper.SetConfigName(".env")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(path)
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(err)
+	cfg := &conf{
+		DBDriver:          getEnv("DB_DRIVER", "mysql"),
+		DBHost:            getEnv("DB_HOST", "localhost"),
+		DBPort:            getEnv("DB_PORT", "3306"),
+		DBUser:            getEnv("DB_USER", "root"),
+		DBPassword:        getEnv("DB_PASSWORD", ""),
+		DBName:            getEnv("DB_NAME", "orders"),
+		WebServerPort:     getEnv("WEB_SERVER_PORT", "8080"),
+		GRPCServerPort:    getEnv("GRPC_SERVER_PORT", "50051"),
+		GraphQLServerPort: getEnv("GRAPHQL_SERVER_PORT", "8081"),
+		RabbitMQHost:      getEnv("RABBITMQ_HOST", "localhost"),
+		RabbitMQPort:      getEnv("RABBITMQ_PORT", "5672"),
+		RabbitMQUser:      getEnv("RABBITMQ_USER", "guest"),
+		RabbitMQPassword:  getEnv("RABBITMQ_PASSWORD", "guest"),
 	}
-	err = viper.Unmarshal(&cfg)
-	if err != nil {
-		panic(err)
+
+	return cfg, nil
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-	return cfg, err
+	return defaultValue
 }
