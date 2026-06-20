@@ -6,7 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/99designs/gqlgen v0.17.78
-	github.com/go-chi/chi/v5 v5.2.2
+	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/wire v0.6.0
 	github.com/mattn/go-sqlite3 v1.14.30
